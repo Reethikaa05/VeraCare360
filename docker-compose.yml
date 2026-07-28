@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    ports:
+      - "4000:4000"
+    volumes:
+      - clinic-data:/app/server/data
+    environment:
+      - JWT_SECRET=local-dev-secret-change-me
+
+volumes:
+  clinic-data:
