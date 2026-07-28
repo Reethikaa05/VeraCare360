@@ -15,3 +15,23 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Signature hero element: a slow ambient sweep around the 24h shift ring. */
+@keyframes ring-sweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.ring-sweep {
+  animation: ring-sweep 90s linear infinite;
+  transform-origin: center;
+}
+@keyframes rise-in {
+  0% { opacity: 0; transform: translateY(14px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.rise-in { animation: rise-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ring-sweep { animation: none; }
+  .rise-in { animation: none; opacity: 1; transform: none; }
+}

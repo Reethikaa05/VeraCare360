@@ -5,6 +5,8 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Fraunces', 'ui-serif', 'Georgia', 'serif'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
       },
       colors: {
         brand: {
@@ -19,6 +21,14 @@ export default {
           800: '#115e59',
           900: '#134e4a',
         },
+        ink: {
+          DEFAULT: '#0b1220',
+          soft: '#131c30',
+          softer: '#1b2740',
+        },
+        paper: '#f6f4ef',
+        handoff: '#fb7185',
+        dusk: '#fbbf24',
       },
     },
   },
