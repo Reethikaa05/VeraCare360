@@ -13,17 +13,32 @@ server-side and safe under concurrent use.
 - **Deploy**: single Docker image — Express serves both the API and the built React app, so one
   free-tier web service (Render/Fly/Railway) is enough.
 
-## Run locally (one command)
+## Run locally — two options
+
+### Option A: Docker (one command, nothing else to install)
 
 ```bash
 docker compose up --build
 ```
 
-Then open **http://localhost:4000**. The database is seeded automatically on first boot from
+Open **http://localhost:4000**. The database seeds automatically on first boot from
 `server/seed-data/staff.csv` and `server/seed-data/shifts.csv` (idempotent — re-running won't
 duplicate data). Data persists in a named Docker volume between restarts.
 
-### Without Docker
+### Option B: Plain terminal, no Docker
+
+If you don't have Docker installed, this does the same thing with just Node + npm:
+
+```bash
+./start.sh
+```
+
+First run installs dependencies for both `server/` and `client/`, seeds the database, then starts
+the API on **http://localhost:4000** and the Vite dev server on **http://localhost:5173** (open
+this one — it proxies `/api` calls to the backend, and gives you hot-reload while you look
+around). Ctrl+C stops both.
+
+Equivalent manual steps, if you'd rather run each piece yourself:
 
 ```bash
 # Backend
@@ -94,12 +109,22 @@ The whole app is one Docker image, so any container host works. E.g. on **Render
 The seed step runs automatically on container boot (`node src/db/seed.js && node src/index.js`) and
 is idempotent, so redeploys never duplicate data.
 
+## Design
+
+The public landing page and login screen share a small custom design system (not Tailwind
+defaults): an ink-navy background, a teal/coral duotone accent standing in for "day shift / evening
+handoff," Fraunces for display type paired with Inter for UI text and IBM Plex Mono for data
+(times, stats). The signature visual is a hand-built 24-hour shift ring (`ShiftRing.tsx`) — the
+same night/day/evening coverage concept the actual dashboard tracks, distilled into one image.
+Reduced-motion is respected on the ambient ring animation.
+
 ## Project structure
 
 ```
 clinic-scheduler/
 ├── Dockerfile              # multi-stage: builds client, runs server (serves both)
 ├── docker-compose.yml
+├── start.sh                 # one-command run without Docker
 ├── DECISIONS.md
 ├── server/
 │   ├── src/
@@ -111,7 +136,7 @@ clinic-scheduler/
 │   └── seed-data/          # the original staff.csv / shifts.csv
 └── client/
     └── src/
-        ├── pages/          # Login, Dashboard (coverage), MyShifts, ImportPage, ImportReport, StaffPage
-        ├── components/     # ShiftModal, StatusBadge
+        ├── pages/          # Landing, Login, Dashboard (coverage), MyShifts, ImportPage, ImportReport, StaffPage
+        ├── components/     # ShiftRing (signature hero visual), ShiftModal, StatusBadge
         └── lib/            # api.ts (typed fetch client), auth.tsx, dateUtils.ts
 ```
