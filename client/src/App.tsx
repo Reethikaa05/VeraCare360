@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './lib/auth';
 import Layout from './Layout';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import MyShifts from './pages/MyShifts';
@@ -10,7 +11,7 @@ import StaffPage from './pages/StaffPage';
 
 function RequireAuth({ children }: { children: JSX.Element }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="flex min-h-screen items-center justify-center text-sm text-slate-400">Loading…</div>;
+  if (loading) return <div className="flex min-h-screen items-center justify-center bg-ink text-sm text-slate-400">Loading…</div>;
   if (!user) return <Navigate to="/login" replace />;
   return children;
 }
@@ -21,14 +22,17 @@ function RequireManager({ children }: { children: JSX.Element }) {
   return children;
 }
 
-function HomeRedirect() {
-  const { user } = useAuth();
-  return <Navigate to={user?.role === 'manager' ? '/dashboard' : '/my-shifts'} replace />;
+function HomeRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="flex min-h-screen items-center justify-center bg-ink text-sm text-slate-400">Loading…</div>;
+  if (!user) return <Landing />;
+  return <Navigate to={user.role === 'manager' ? '/dashboard' : '/my-shifts'} replace />;
 }
 
 export default function App() {
   return (
     <Routes>
+      <Route path="/" element={<HomeRoute />} />
       <Route path="/login" element={<Login />} />
       <Route
         element={
@@ -37,7 +41,6 @@ export default function App() {
           </RequireAuth>
         }
       >
-        <Route path="/" element={<HomeRedirect />} />
         <Route path="/dashboard" element={<RequireManager><Dashboard /></RequireManager>} />
         <Route path="/import" element={<RequireManager><ImportPage /></RequireManager>} />
         <Route path="/import-report" element={<RequireManager><ImportReport /></RequireManager>} />
