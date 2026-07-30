@@ -1,11 +1,14 @@
 # VeraCare® Clinic Scheduler & 24/7 Roster Platform
 
+[![Live Application](https://img.shields.io/badge/Live_Demo-veracare360.onrender.com-brightgreen?style=for-the-badge&logo=render)](https://veracare360.onrender.com/)
 [![Node.js](https://img.shields.io/badge/Node.js-v24.15.0-green.svg)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-v18.3.1-blue.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-v5.5.4-blue.svg)](https://www.typescriptlang.org/)
 [![SQLite WASM](https://img.shields.io/badge/Database-SQLite_WASM-cyan.svg)](https://sql.js.org/)
 [![Tests](https://img.shields.io/badge/Tests-20%2F20_Passed-emerald.svg)]()
-[![License](https://img.shields.io/badge/License-MIT-purple.svg)]()
+
+> [!IMPORTANT]
+> **🚀 Live Production Application**: [https://veracare360.onrender.com/](https://veracare360.onrender.com/)
 
 A high-performance, 24/7 medical staff shift scheduling platform designed for modern clinics, hospital units, and emergency medical teams. Built with a single-page **VeraCare® Video Hero**, glassmorphic navigation, liquid-glass UI controls, and Instrument Serif display typography.
 
