@@ -8,11 +8,19 @@ import authRoutes from './routes/auth.js';
 import shiftRoutes from './routes/shifts.js';
 import staffRoutes from './routes/staff.js';
 import importRoutes from './routes/imports.js';
+import { seedDatabase } from './db/seed.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Automatically seed DB on boot if empty (guarantees live deployment always has initial data)
+try {
+  seedDatabase();
+} catch (e) {
+  console.error('Error seeding database on startup:', e);
+}
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 app.use('/api/auth', authRoutes);

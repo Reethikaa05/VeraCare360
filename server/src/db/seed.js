@@ -23,8 +23,8 @@ function seedManager() {
   console.log(`Seeded manager: manager@clinic.local / ${DEFAULT_SEED_PASSWORD}`);
 }
 
-function main() {
-  console.log('--- Seeding database ---');
+export function seedDatabase() {
+  console.log('--- Seeding database check ---');
   seedManager();
 
   const staffCount = db.prepare(`SELECT COUNT(*) c FROM users WHERE role='staff'`).get().c;
@@ -51,4 +51,7 @@ function main() {
   console.log(`All seeded staff logins share the password: ${DEFAULT_SEED_PASSWORD}`);
 }
 
-main();
+// Auto-run if executed directly via node src/db/seed.js
+if (process.argv[1] && process.argv[1].endsWith('seed.js')) {
+  seedDatabase();
+}
