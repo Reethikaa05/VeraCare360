@@ -32,6 +32,7 @@ export default function ShiftModal({ shiftId, defaultDate, user, staffList, onCl
   const [reqReceptionist, setReqReceptionist] = useState(0);
   const [notes, setNotes] = useState('');
   const [assignUserId, setAssignUserId] = useState<string>('');
+  const [staffSearchQuery, setStaffSearchQuery] = useState('');
 
   useEffect(() => {
     if (shiftId === null) return;
@@ -84,7 +85,7 @@ export default function ShiftModal({ shiftId, defaultDate, user, staffList, onCl
 
   async function handleDelete() {
     if (!shift) return;
-    if (!confirm('Delete this shift? This also removes any staff claims on it.')) return;
+    if (!confirm('Delete this shift? This will also remove any staff claims on it.')) return;
     setSaving(true);
     try {
       await api.deleteShift(shift.id);
@@ -123,16 +124,16 @@ export default function ShiftModal({ shiftId, defaultDate, user, staffList, onCl
     }
   }
 
-  async function handleAssign() {
-    if (!shift || !assignUserId) return;
+  async function handleAssignUser(userIdToAssign: number) {
+    if (!shift) return;
     setError(null);
     setSaving(true);
     try {
-      await api.assignShift(shift.id, Number(assignUserId));
+      await api.assignShift(shift.id, userIdToAssign);
       setAssignUserId('');
       await refresh();
     } catch (err: any) {
-      setError(err.message || 'Failed to assign staff');
+      setError(err.message || 'Failed to assign staff member');
     } finally {
       setSaving(false);
     }
@@ -142,109 +143,206 @@ export default function ShiftModal({ shiftId, defaultDate, user, staffList, onCl
   const canClaimSelf =
     !isManager && shift && user.profession && shift.missing[user.profession] > 0 && !myClaim;
 
+  const filteredStaffList = staffList.filter((s) =>
+    (s.full_name + s.email + s.profession).toLowerCase().includes(staffSearchQuery.toLowerCase())
+  );
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto"
+      onClick={onClose}
+    >
       <div
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-xl"
+        className="liquid-glass my-auto max-h-[85vh] w-full max-w-xl flex flex-col rounded-3xl p-6 shadow-2xl backdrop-blur-2xl text-white border border-white/20"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-          <h2 className="text-lg font-semibold text-slate-900">
-            {isNew ? 'New shift' : `Shift ${shift?.external_shift_id ? `#${shift.external_shift_id}` : ''}`}
-          </h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+        {/* Sticky Header */}
+        <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+          <div>
+            <h2
+              className="text-2xl font-normal text-white"
+              style={{ fontFamily: "'Instrument Serif', serif" }}
+            >
+              {isNew ? 'Create Clinic Shift' : `Shift Slot #${shift?.external_shift_id || shift?.id}`}
+            </h2>
+            <p className="text-[11px] font-mono text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+              {isManager ? 'Manager Staffing Control' : 'Shift Details'}
+            </p>
+          </div>
+          <button onClick={onClose} className="rounded-full p-2 text-white/50 hover:bg-white/10 hover:text-white transition-colors cursor-pointer">
             ✕
           </button>
         </div>
 
+        {/* Scrollable Content Area */}
         {loading ? (
-          <div className="p-8 text-center text-sm text-slate-500">Loading…</div>
+          <div className="py-12 text-center text-sm text-[hsl(var(--muted-foreground))] font-mono">Loading shift parameters…</div>
         ) : (
-          <div className="space-y-5 p-5">
+          <div className="flex-1 overflow-y-auto pr-1 space-y-6">
             {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+              <div className="rounded-xl border border-rose-500/30 bg-rose-500/15 p-3.5 text-xs text-rose-200">{error}</div>
             )}
             {conflicts && conflicts.length > 0 && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                Conflicts: {conflicts.map((c) => c.name).join(', ')}
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/15 p-3.5 text-xs text-amber-200">
+                Conflicts Detected: {conflicts.map((c) => c.name).join(', ')}
               </div>
             )}
 
             {shift && <StatusBadge status={shift.status} />}
 
+            {/* Manager Shift Creation & Slotting Controls */}
             {isManager ? (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
-                  <label className="mb-1 block text-xs font-medium text-slate-600">Date</label>
-                  <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-600">Start time</label>
-                  <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-600">End time</label>
-                  <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-                  <p className="mt-1 text-[11px] text-slate-400">End ≤ start is treated as overnight (next day).</p>
-                </div>
-
-                {PROFESSIONS.map((p) => (
-                  <div key={p}>
-                    <label className="mb-1 block text-xs font-medium text-slate-600">{PROFESSION_LABELS[p]} needed</label>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <label className="mb-1 block text-[11px] font-mono uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Shift Date</label>
                     <input
-                      type="number" min={0}
-                      value={p === 'doctor' ? reqDoctor : p === 'nurse' ? reqNurse : reqReceptionist}
-                      onChange={(e) => {
-                        const v = Math.max(0, Number(e.target.value));
-                        if (p === 'doctor') setReqDoctor(v); else if (p === 'nurse') setReqNurse(v); else setReqReceptionist(v);
-                      }}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-slate-900 px-3.5 py-2 text-sm text-white focus:outline-none focus:border-white/40"
                     />
                   </div>
-                ))}
+                  <div>
+                    <label className="mb-1 block text-[11px] font-mono uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Start Time</label>
+                    <input
+                      type="time"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-slate-900 px-3.5 py-2 text-sm text-white focus:outline-none focus:border-white/40"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] font-mono uppercase tracking-wider text-[hsl(var(--muted-foreground))]">End Time</label>
+                    <input
+                      type="time"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-slate-900 px-3.5 py-2 text-sm text-white focus:outline-none focus:border-white/40"
+                    />
+                  </div>
+                </div>
 
-                <div className="col-span-2">
-                  <label className="mb-1 block text-xs font-medium text-slate-600">Notes (optional)</label>
-                  <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                {/* Headcount Role Slotting Section */}
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-[hsl(var(--muted-foreground))]">
+                    Role Headcount Requirements (Slotting)
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {/* Doctor Slot Counter */}
+                    <div className="rounded-xl border border-white/10 bg-slate-900/80 p-3 text-center">
+                      <span className="text-xs font-semibold text-indigo-300 block mb-1">Doctors Needed</span>
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setReqDoctor(Math.max(0, reqDoctor - 1))}
+                          className="h-6 w-6 rounded-full bg-white/10 text-white font-bold hover:bg-white/20 text-xs"
+                        >
+                          -
+                        </button>
+                        <span className="font-mono text-base font-bold text-white w-6">{reqDoctor}</span>
+                        <button
+                          type="button"
+                          onClick={() => setReqDoctor(reqDoctor + 1)}
+                          className="h-6 w-6 rounded-full bg-white/10 text-white font-bold hover:bg-white/20 text-xs"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Nurse Slot Counter */}
+                    <div className="rounded-xl border border-white/10 bg-slate-900/80 p-3 text-center">
+                      <span className="text-xs font-semibold text-teal-300 block mb-1">Nurses Needed</span>
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setReqNurse(Math.max(0, reqNurse - 1))}
+                          className="h-6 w-6 rounded-full bg-white/10 text-white font-bold hover:bg-white/20 text-xs"
+                        >
+                          -
+                        </button>
+                        <span className="font-mono text-base font-bold text-white w-6">{reqNurse}</span>
+                        <button
+                          type="button"
+                          onClick={() => setReqNurse(reqNurse + 1)}
+                          className="h-6 w-6 rounded-full bg-white/10 text-white font-bold hover:bg-white/20 text-xs"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Receptionist Slot Counter */}
+                    <div className="rounded-xl border border-white/10 bg-slate-900/80 p-3 text-center">
+                      <span className="text-xs font-semibold text-amber-300 block mb-1">Receptionists</span>
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setReqReceptionist(Math.max(0, reqReceptionist - 1))}
+                          className="h-6 w-6 rounded-full bg-white/10 text-white font-bold hover:bg-white/20 text-xs"
+                        >
+                          -
+                        </button>
+                        <span className="font-mono text-base font-bold text-white w-6">{reqReceptionist}</span>
+                        <button
+                          type="button"
+                          onClick={() => setReqReceptionist(reqReceptionist + 1)}
+                          className="h-6 w-6 rounded-full bg-white/10 text-white font-bold hover:bg-white/20 text-xs"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-[11px] font-mono uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Shift Instructions / Department Notes</label>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={2}
+                    className="w-full rounded-xl border border-white/10 bg-slate-900 px-3.5 py-2 text-sm text-white focus:outline-none focus:border-white/40 placeholder:text-white/30"
+                    placeholder="ICU duty, ER handoff, or special clinic notes..."
+                  />
                 </div>
               </div>
             ) : shift ? (
-              <div className="rounded-xl bg-slate-50 p-4 text-sm">
-                <p className="font-medium text-slate-900">{shift.date}</p>
-                <p className="text-slate-600">{shift.start_time} – {shift.end_time}</p>
-                {shift.notes && <p className="mt-2 text-slate-500">{shift.notes}</p>}
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm">
+                <p className="font-semibold text-white">{shift.date}</p>
+                <p className="text-white/70 font-mono text-xs">{shift.start_time} – {shift.end_time}</p>
+                {shift.notes && <p className="mt-2 text-xs text-[hsl(var(--muted-foreground))]">{shift.notes}</p>}
               </div>
             ) : null}
 
+            {/* Currently Claimed / Assigned Roster */}
             {shift && (
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Assigned staff</p>
-                <div className="space-y-1.5">
+                <p className="mb-2 text-[10px] font-mono uppercase tracking-widest text-[hsl(var(--muted-foreground))]">Current Shift Roster</p>
+                <div className="space-y-2">
                   {PROFESSIONS.map((p) => {
                     const claimsForProf = shift.claims.filter((c) => c.profession === p);
                     const required = p === 'doctor' ? shift.req_doctor : p === 'nurse' ? shift.req_nurse : shift.req_receptionist;
                     if (required === 0 && claimsForProf.length === 0) return null;
                     return (
-                      <div key={p} className="rounded-lg border border-slate-200 p-2.5">
-                        <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-500">
-                          <span>{PROFESSION_LABELS[p]}</span>
-                          <span>{claimsForProf.length}/{required}</span>
+                      <div key={p} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                        <div className="mb-1.5 flex items-center justify-between text-xs font-semibold text-white">
+                          <span className="capitalize">{PROFESSION_LABELS[p]}</span>
+                          <span className="font-mono text-[11px] text-[hsl(var(--muted-foreground))]">{claimsForProf.length}/{required} filled</span>
                         </div>
-                        {claimsForProf.length === 0 && <p className="text-xs text-slate-400">None assigned</p>}
+                        {claimsForProf.length === 0 && <p className="text-xs text-white/40 italic">No staff assigned yet</p>}
                         {claimsForProf.map((c) => (
-                          <div key={c.claim_id} className="flex items-center justify-between py-0.5 text-sm">
-                            <span className="text-slate-700">
-                              {c.full_name} {c.assigned_by === 'manager' && <span className="text-[10px] text-slate-400">(assigned)</span>}
+                          <div key={c.claim_id} className="flex items-center justify-between py-1 text-xs">
+                            <span className="text-white font-medium flex items-center gap-2">
+                              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                              {c.full_name} {c.assigned_by === 'manager' && <span className="text-[10px] text-white/40">(assigned by manager)</span>}
                             </span>
                             {(isManager || c.user_id === user.id) && (
                               <button
                                 disabled={saving}
                                 onClick={() => handleUnclaim(c.user_id)}
-                                className="text-xs font-medium text-red-500 hover:text-red-700"
+                                className="text-xs font-medium text-rose-400 hover:text-rose-300 transition-colors cursor-pointer"
                               >
                                 Remove
                               </button>
@@ -258,25 +356,58 @@ export default function ShiftModal({ shiftId, defaultDate, user, staffList, onCl
               </div>
             )}
 
+            {/* Manager Direct Staff Assignment Section with Search & Scroll */}
             {isManager && shift && (
-              <div className="flex items-center gap-2">
-                <select
-                  value={assignUserId}
-                  onChange={(e) => setAssignUserId(e.target.value)}
-                  className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                >
-                  <option value="">Assign a staff member…</option>
-                  {staffList.map((s) => (
-                    <option key={s.id} value={s.id}>{s.full_name} ({s.profession})</option>
-                  ))}
-                </select>
-                <button
-                  disabled={!assignUserId || saving}
-                  onClick={handleAssign}
-                  className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-900 disabled:opacity-40"
-                >
-                  Assign
-                </button>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-[10px] font-mono uppercase tracking-widest text-[hsl(var(--muted-foreground))]">
+                    Directly Assign Staff Member to Shift
+                  </label>
+                  <span className="text-[10px] font-mono text-white/60">{staffList.length} staff available</span>
+                </div>
+
+                <input
+                  type="text"
+                  value={staffSearchQuery}
+                  onChange={(e) => setStaffSearchQuery(e.target.value)}
+                  placeholder="Filter doctor or nurse by name/role..."
+                  className="w-full rounded-xl border border-white/10 bg-slate-900 px-3.5 py-1.5 text-xs text-white focus:outline-none"
+                />
+
+                {/* Scrollable Staff List Selector */}
+                <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1 border border-white/10 rounded-xl bg-slate-950 p-2">
+                  {filteredStaffList.length === 0 ? (
+                    <div className="text-center py-4 text-xs text-white/40 italic">No matching staff found</div>
+                  ) : (
+                    filteredStaffList.map((s) => {
+                      const alreadyAssigned = shift.claims.some((c) => c.user_id === s.id);
+                      return (
+                        <div
+                          key={s.id}
+                          className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-xs transition-colors hover:bg-white/10"
+                        >
+                          <div>
+                            <span className="font-semibold text-white block">{s.full_name}</span>
+                            <span className="font-mono text-[10px] text-[hsl(var(--muted-foreground))] capitalize">
+                              {s.profession} · {s.email}
+                            </span>
+                          </div>
+                          <button
+                            disabled={alreadyAssigned || saving}
+                            onClick={() => handleAssignUser(s.id)}
+                            className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-all cursor-pointer ${
+                              alreadyAssigned
+                                ? 'bg-white/10 text-white/40 cursor-not-allowed'
+                                : 'liquid-glass text-white hover:scale-105'
+                            }`}
+                          >
+                            {alreadyAssigned ? 'Assigned' : '+ Assign'}
+                          </button>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             )}
 
@@ -284,35 +415,37 @@ export default function ShiftModal({ shiftId, defaultDate, user, staffList, onCl
               <button
                 disabled={saving}
                 onClick={handleClaimSelf}
-                className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+                className="liquid-glass w-full rounded-full py-3 text-sm font-semibold text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 cursor-pointer"
               >
-                Claim this shift
+                Claim This Shift Slot
               </button>
             )}
-            {myClaim && !isManager && (
-              <p className="text-center text-sm text-emerald-600">You're claimed for this shift.</p>
-            )}
 
-            {isManager && (
-              <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
-                {!isNew && (
-                  <button
-                    onClick={handleDelete}
-                    disabled={saving}
-                    className="rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-                  >
-                    Delete shift
-                  </button>
-                )}
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="ml-auto rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
-                >
-                  {saving ? 'Saving…' : isNew ? 'Create shift' : 'Save changes'}
-                </button>
-              </div>
+            {myClaim && !isManager && (
+              <p className="text-center text-xs font-medium text-emerald-400">✓ You are claimed for this shift</p>
             )}
+          </div>
+        )}
+
+        {/* Sticky Footer */}
+        {isManager && (
+          <div className="sticky bottom-0 z-10 flex items-center justify-between gap-3 border-t border-white/10 pt-4 mt-4 bg-[hsl(201_100%_13%)]/95 backdrop-blur-md">
+            {!isNew && (
+              <button
+                onClick={handleDelete}
+                disabled={saving}
+                className="text-xs font-medium text-rose-400 hover:text-rose-300 transition-colors cursor-pointer"
+              >
+                Delete Shift
+              </button>
+            )}
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="liquid-glass ml-auto rounded-full px-6 py-2.5 text-xs font-semibold text-white transition-all hover:scale-105 disabled:opacity-40 cursor-pointer"
+            >
+              {saving ? 'Saving…' : isNew ? 'Create Shift' : 'Save Shift Parameters'}
+            </button>
           </div>
         )}
       </div>

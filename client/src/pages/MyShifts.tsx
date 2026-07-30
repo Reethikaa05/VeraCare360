@@ -43,69 +43,107 @@ export default function MyShifts() {
   visible.forEach((s) => { if (shiftsByDay[s.date]) shiftsByDay[s.date].push(s); });
 
   return (
-    <div>
-      <div className="mb-5">
-        <h1 className="text-xl font-bold text-slate-900">My shifts</h1>
-        <p className="text-sm text-slate-500">
-          Browse open shifts as a {user?.profession}, and claim the ones that work for you.
+    <div className="space-y-6 animate-fade-rise">
+      <div>
+        <h1
+          className="text-4xl font-normal text-white"
+          style={{ fontFamily: "'Instrument Serif', serif" }}
+        >
+          My Shift Portal
+        </h1>
+        <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
+          Browse open shifts as a <span className="text-white font-semibold capitalize">{user?.profession}</span>, and claim open slots instantly.
         </p>
       </div>
 
       {myUpcoming.length > 0 && (
-        <div className="mb-6 rounded-xl border border-brand-200 bg-brand-50/60 p-4">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-brand-700">Your claimed shifts</p>
-          <div className="flex flex-wrap gap-2">
+        <div className="liquid-glass rounded-3xl border border-white/10 p-5">
+          <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-[hsl(var(--muted-foreground))]">
+            Your Claimed Roster ({myUpcoming.length} Shifts)
+          </p>
+          <div className="flex flex-wrap gap-2.5">
             {myUpcoming.map((s) => (
               <button
                 key={s.id}
                 onClick={() => setModalShiftId(s.id)}
-                className="rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-50"
+                className="liquid-glass rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-white hover:scale-105 transition-all cursor-pointer"
               >
-                {formatDateLabel(s.date)} · {s.start_time}–{s.end_time}
+                ✓ {formatDateLabel(s.date)} · <span className="font-mono">{s.start_time}–{s.end_time}</span>
               </button>
             ))}
           </div>
         </div>
       )}
 
-      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      {/* Filter & Controls */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-white/10 pb-4">
         <div className="flex flex-wrap items-center gap-2">
-          <button onClick={() => setWeekStart(addDays(weekStart, -7))}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
-            ← Prev
-          </button>
-          <span className="text-sm font-medium text-slate-700">{formatWeekRange(weekStart)}</span>
-          <button onClick={() => setWeekStart(addDays(weekStart, 7))}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
-            Next →
-          </button>
-          <input type="date" value={weekStart} onChange={(e) => setWeekStart(startOfWeek(e.target.value))}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm" />
+          <div className="liquid-glass flex items-center rounded-full p-1 border border-white/10">
+            <button
+              onClick={() => setWeekStart(addDays(weekStart, -7))}
+              className="rounded-full px-3 py-1.5 text-xs font-medium text-white hover:bg-white/10 transition-colors"
+            >
+              ← Prev
+            </button>
+            <span className="px-3 font-mono text-xs text-white">{formatWeekRange(weekStart)}</span>
+            <button
+              onClick={() => setWeekStart(addDays(weekStart, 7))}
+              className="rounded-full px-3 py-1.5 text-xs font-medium text-white hover:bg-white/10 transition-colors"
+            >
+              Next →
+            </button>
+          </div>
+          <input
+            type="date"
+            value={weekStart}
+            onChange={(e) => setWeekStart(startOfWeek(e.target.value))}
+            className="rounded-full border border-white/10 bg-slate-900 px-4 py-1.5 text-xs text-white focus:outline-none"
+          />
         </div>
-        <div className="flex items-center gap-3 text-sm">
-          <label className="flex items-center gap-1.5 text-slate-600">
-            <input type="checkbox" checked={onlyOpen} onChange={(e) => setOnlyOpen(e.target.checked)} />
-            Only open for {PROF_LABEL[user?.profession || '']}
+
+        <div className="flex items-center gap-4 text-xs">
+          <label className="flex items-center gap-2 text-white/80 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={onlyOpen}
+              onChange={(e) => setOnlyOpen(e.target.checked)}
+              className="rounded border-white/20 bg-white/10"
+            />
+            Open for {PROF_LABEL[user?.profession || '']}
           </label>
-          <label className="flex items-center gap-1.5 text-slate-600">
-            <input type="checkbox" checked={onlyMine} onChange={(e) => setOnlyMine(e.target.checked)} />
-            Only mine
+          <label className="flex items-center gap-2 text-white/80 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={onlyMine}
+              onChange={(e) => setOnlyMine(e.target.checked)}
+              className="rounded border-white/20 bg-white/10"
+            />
+            Only Mine
           </label>
         </div>
       </div>
 
       {loading ? (
-        <div className="py-16 text-center text-sm text-slate-500">Loading shifts…</div>
+        <div className="py-24 text-center text-sm text-[hsl(var(--muted-foreground))] font-mono">
+          Loading shifts...
+        </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-7">
           {days.map((day) => (
-            <div key={day} className="rounded-xl border border-slate-200 bg-slate-50/60 p-2.5">
-              <p className={`mb-2 px-0.5 text-xs font-semibold ${day === todayIso() ? 'text-brand-700' : 'text-slate-600'}`}>
+            <div key={day} className="liquid-glass rounded-3xl p-3 border border-white/10">
+              <p
+                className={`mb-3 border-b border-white/10 pb-2 px-1 text-lg font-normal ${
+                  day === todayIso() ? 'text-white font-bold' : 'text-white/80'
+                }`}
+                style={{ fontFamily: "'Instrument Serif', serif" }}
+              >
                 {formatDateLabel(day)}
               </p>
-              <div className="space-y-2">
+              <div className="space-y-2.5 min-h-[140px]">
                 {shiftsByDay[day].length === 0 && (
-                  <p className="px-1 py-3 text-center text-[11px] text-slate-300">No shifts</p>
+                  <div className="flex h-28 items-center justify-center rounded-2xl border border-dashed border-white/10 text-[11px] text-white/30 italic">
+                    No shifts
+                  </div>
                 )}
                 {shiftsByDay[day].map((s) => {
                   const mine = s.claims.some((c) => c.user_id === user?.id);
@@ -113,17 +151,21 @@ export default function MyShifts() {
                     <button
                       key={s.id}
                       onClick={() => setModalShiftId(s.id)}
-                      className={`w-full rounded-lg border bg-white p-2.5 text-left shadow-sm transition-shadow hover:shadow-md ${
-                        mine ? 'border-brand-300 ring-1 ring-brand-200' : 'border-slate-200'
+                      className={`w-full rounded-2xl border p-3 text-left shadow-lg backdrop-blur-md transition-all hover:scale-[1.02] cursor-pointer ${
+                        mine
+                          ? 'border-emerald-400 bg-emerald-500/15'
+                          : 'border-white/10 bg-white/5 hover:border-white/30'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-800">{s.start_time}–{s.end_time}</span>
+                        <span className="font-mono text-xs font-semibold text-white">
+                          {s.start_time}–{s.end_time}
+                        </span>
                         <StatusBadge status={s.status} />
                       </div>
-                      {mine && <p className="mt-1 text-[11px] font-medium text-brand-600">You're claimed</p>}
+                      {mine && <p className="mt-2 text-[11px] font-semibold text-emerald-400">✓ You're claimed</p>}
                       {user?.profession && !mine && (
-                        <p className="mt-1 text-[11px] text-slate-400">
+                        <p className="mt-2 text-[11px] text-[hsl(var(--muted-foreground))]">
                           {s.missing[user.profession] > 0
                             ? `${s.missing[user.profession]} ${PROF_LABEL[user.profession]} spot(s) open`
                             : `No ${PROF_LABEL[user.profession]} spots open`}

@@ -1,19 +1,27 @@
 const STYLES: Record<string, string> = {
-  empty: 'bg-red-50 text-red-700 border-red-200',
-  partial: 'bg-amber-50 text-amber-700 border-amber-200',
-  full: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  empty: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+  partial: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+  full: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
 };
 
 const LABELS: Record<string, string> = {
-  empty: 'Empty',
-  partial: 'Partially staffed',
-  full: 'Fully staffed',
+  empty: 'Unstaffed',
+  partial: 'Partial',
+  full: 'Fully Staffed',
 };
 
 export default function StatusBadge({ status }: { status: 'empty' | 'partial' | 'full' }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${STYLES[status]}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${status === 'empty' ? 'bg-red-500' : status === 'partial' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium backdrop-blur ${STYLES[status]}`}>
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${
+          status === 'empty'
+            ? 'bg-rose-400 animate-pulse'
+            : status === 'partial'
+            ? 'bg-amber-400'
+            : 'bg-emerald-400'
+        }`}
+      />
       {LABELS[status]}
     </span>
   );

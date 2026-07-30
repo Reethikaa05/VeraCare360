@@ -31,71 +31,89 @@ export default function ImportPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="mb-1 text-xl font-bold text-slate-900">Import CSV</h1>
-      <p className="mb-6 text-sm text-slate-500">
-        Upload a staff or shifts CSV using the same cleaning &amp; validation rules as the initial seed import.
-      </p>
+    <div className="mx-auto max-w-2xl space-y-6 animate-fade-rise">
+      <div>
+        <h1
+          className="text-4xl font-normal text-white"
+          style={{ fontFamily: "'Instrument Serif', serif" }}
+        >
+          CSV Roster Importer
+        </h1>
+        <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">
+          Upload staff lists or shift schedules. The automated pipeline cleans, validates, and logs any corrections made.
+        </p>
+      </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-4 flex gap-2">
+      <div className="liquid-glass rounded-3xl p-8 shadow-2xl backdrop-blur-2xl border border-white/10">
+        <div className="mb-6 flex gap-2">
           {(['shifts', 'staff'] as const).map((k) => (
             <button
               key={k}
               onClick={() => { setKind(k); setResult(null); setError(null); }}
-              className={`rounded-lg px-3 py-2 text-sm font-medium ${
-                kind === k ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              className={`rounded-full px-5 py-2 text-xs font-semibold capitalize transition-all cursor-pointer ${
+                kind === k
+                  ? 'liquid-glass text-white border border-white/30'
+                  : 'text-[hsl(var(--muted-foreground))] hover:text-white'
               }`}
             >
-              {k === 'shifts' ? 'Shifts CSV' : 'Staff CSV'}
+              {k === 'shifts' ? 'Shifts Roster CSV' : 'Staff Directory CSV'}
             </button>
           ))}
         </div>
 
-        <label className="mb-4 flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center hover:border-brand-400">
+        <label className="mb-6 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-white/20 bg-white/5 px-6 py-12 text-center transition-all hover:border-white/40 hover:bg-white/10">
           <input type="file" accept=".csv" className="hidden" onChange={onFileChange} />
-          <span className="text-sm font-medium text-slate-600">
-            {file ? file.name : 'Click to choose a CSV file'}
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white font-mono text-xl mb-3 border border-white/15">
+            📁
+          </div>
+          <span className="text-sm font-semibold text-white">
+            {file ? file.name : 'Click to select CSV file'}
           </span>
-          <span className="mt-1 text-xs text-slate-400">
-            {kind === 'shifts' ? 'Expected columns: shift_id, date, start_time, end_time, requirements' : 'Expected columns: staff_id, full_name, role, email'}
+          <span className="mt-1.5 font-mono text-[11px] text-[hsl(var(--muted-foreground))]">
+            {kind === 'shifts'
+              ? 'Expected headers: shift_id, date, start_time, end_time, requirements'
+              : 'Expected headers: staff_id, full_name, role, email'}
           </span>
         </label>
 
         {error && (
-          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+          <div className="mb-6 rounded-2xl border border-rose-500/30 bg-rose-500/15 p-4 text-xs text-rose-200">
+            {error}
+          </div>
         )}
 
         <button
           disabled={!file || uploading}
           onClick={onUpload}
-          className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+          className="liquid-glass w-full rounded-full py-3.5 text-sm font-semibold text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 cursor-pointer"
         >
-          {uploading ? 'Importing…' : 'Run import'}
+          {uploading ? 'Processing & Validating CSV…' : 'Run Import Pipeline'}
         </button>
 
         {result && (
-          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="mb-3 text-sm font-semibold text-slate-700">Import complete</p>
-            <div className="grid grid-cols-3 gap-2 text-center text-sm">
-              <div className="rounded-lg bg-emerald-50 py-2">
-                <p className="font-bold text-emerald-700">{result.accepted}</p>
-                <p className="text-xs text-emerald-600">Accepted</p>
+          <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5 animate-fade-rise">
+            <p className="mb-3 text-xs font-mono uppercase tracking-widest text-[hsl(var(--muted-foreground))]">
+              Import Pipeline Complete
+            </p>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/15 py-3">
+                <p className="font-mono text-xl font-bold text-emerald-300">{result.accepted}</p>
+                <p className="text-[10px] text-emerald-200">Accepted</p>
               </div>
-              <div className="rounded-lg bg-amber-50 py-2">
-                <p className="font-bold text-amber-700">{result.merged}</p>
-                <p className="text-xs text-amber-600">Merged</p>
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/15 py-3">
+                <p className="font-mono text-xl font-bold text-amber-300">{result.merged}</p>
+                <p className="text-[10px] text-amber-200">Merged</p>
               </div>
-              <div className="rounded-lg bg-red-50 py-2">
-                <p className="font-bold text-red-700">{result.rejected}</p>
-                <p className="text-xs text-red-600">Rejected</p>
+              <div className="rounded-2xl border border-rose-500/30 bg-rose-500/15 py-3">
+                <p className="font-mono text-xl font-bold text-rose-300">{result.rejected}</p>
+                <p className="text-[10px] text-rose-200">Rejected</p>
               </div>
             </div>
             <button
               onClick={() => navigate('/import-report')}
-              className="mt-4 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+              className="liquid-glass mt-4 w-full rounded-full py-2.5 text-xs font-semibold text-white hover:scale-105 transition-transform"
             >
-              View full report →
+              View Detailed Audit Report →
             </button>
           </div>
         )}
