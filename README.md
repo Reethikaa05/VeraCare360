@@ -62,28 +62,28 @@ Managers create and allocate shifts with real-time week-at-a-glance coverage hea
 ```mermaid
 graph TD
     subgraph Client ["Client Tier (React 18 + TypeScript + Vite + Tailwind CSS)"]
-        Landing["VeraCare® Video Hero Landing Page"]
-        CoverageBoard["Week-at-a-Glance Coverage Board & KPI Analytics"]
-        ShiftPortal["Staff Shift Claiming Portal & Profile Settings"]
-        CsvImporter["CSV Roster Importer & Audit Stream"]
+        Landing["VeraCare Video Hero Landing Page"]
+        CoverageBoard["Week-at-a-Glance Coverage Board and KPI Analytics"]
+        ShiftPortal["Staff Shift Claiming Portal and Profile Settings"]
+        CsvImporter["CSV Roster Importer and Audit Stream"]
     end
 
     subgraph Server ["Server Tier (Node.js v24 ESM + Express REST API)"]
-        AuthRouter["Auth & JWT Router (/api/auth)"]
-        ShiftsRouter["Shift Management & Concurrency Engine (/api/shifts)"]
+        AuthRouter["Auth and JWT Router (/api/auth)"]
+        ShiftsRouter["Shift Management and Concurrency Engine (/api/shifts)"]
         StaffRouter["Staff Directory Router (/api/staff)"]
         ImportsRouter["CSV Importer Engine (/api/imports)"]
     end
 
-    subgraph Storage ["Database & Storage Tier (WASM SQLite)"]
-        DbInstance[("`sql.js` WASM Database Engine")]
-        UsersTable[("`users` Table")]
-        ShiftsTable[("`shifts` Table")]
-        ClaimsTable[("`claims` Table")]
-        ImportLogsTable[("`import_runs` & `import_rows` Tables")]
+    subgraph Storage ["Database and Storage Tier (WASM SQLite)"]
+        DbInstance["sql.js WASM Database Engine"]
+        UsersTable["Users Table"]
+        ShiftsTable["Shifts Table"]
+        ClaimsTable["Claims Table"]
+        ImportLogsTable["Import Runs and Import Rows Tables"]
     end
 
-    Client -->|REST JSON API / Bearer Token| Server
+    Client --> Server
     AuthRouter --> DbInstance
     ShiftsRouter --> DbInstance
     StaffRouter --> DbInstance
@@ -107,7 +107,7 @@ sequenceDiagram
     autonumber
     actor NurseA as Nurse Aisha
     actor NurseB as Nurse Marcus
-    participant API as Express API (/api/shifts/:id/claim)
+    participant API as Express API (/api/shifts/id/claim)
     participant Engine as Concurrency Engine
     participant DB as WASM SQLite Database
 
@@ -115,19 +115,19 @@ sequenceDiagram
     NurseB->>API: POST /api/shifts/42/claim (JWT Bearer Token)
     
     API->>Engine: Begin Serialized Transaction
-    Engine->>DB: BEGIN TRANSACTION;
-    Engine->>DB: SELECT * FROM shifts WHERE id = 42;
-    Engine->>DB: SELECT COUNT(*) FROM claims WHERE shift_id = 42 AND profession = 'nurse';
+    Engine->>DB: BEGIN TRANSACTION
+    Engine->>DB: SELECT * FROM shifts WHERE id = 42
+    Engine->>DB: SELECT COUNT FROM claims WHERE shift_id = 42 AND profession = nurse
 
     alt Slot Available (Nurse A)
         DB-->>Engine: Headcount (0/1 filled)
-        Engine->>DB: INSERT INTO claims (shift_id, user_id, assigned_by) VALUES (42, UserA, 'self');
-        Engine->>DB: COMMIT;
+        Engine->>DB: INSERT INTO claims (shift_id, user_id, assigned_by)
+        Engine->>DB: COMMIT
         API-->>NurseA: 200 OK (Claim Successful)
     else Slot Full (Nurse B)
         DB-->>Engine: Headcount (1/1 filled)
-        Engine->>DB: ROLLBACK;
-        API-->>NurseB: 400 Bad Request ("Shift already has enough nurses")
+        Engine->>DB: ROLLBACK
+        API-->>NurseB: 400 Bad Request (Shift already has enough nurses)
     end
 ```
 
@@ -137,11 +137,11 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    A["1. CSV Roster Import<br/>(staff.csv / shifts.csv)"] --> B{"2. Validation Engine<br/>(Clean dates, deduplicate emails,<br/>merge staff IDs)"}
-    B -->|Accepted / Merged| C["3. Database Insertion<br/>(WASM SQLite)"]
-    B -->|Validation Error| D["Audit Log Report<br/>(Logged with explicit reason)"]
-    C --> E["4. Real-time Coverage Heatmap<br/>(Doctor / Nurse / Receptionist Status)"]
-    E --> F["5. Self-Service Claiming<br/>or Manager Direct Assignment"]
+    A["1. CSV Roster Import (staff.csv / shifts.csv)"] --> B{"2. Validation Engine (Clean dates, deduplicate emails)"}
+    B -->|Accepted / Merged| C["3. Database Insertion (WASM SQLite)"]
+    B -->|Validation Error| D["Audit Log Report (Logged with reason)"]
+    C --> E["4. Real-time Coverage Heatmap (Doctor / Nurse Status)"]
+    E --> F["5. Self-Service Claiming or Direct Assignment"]
 ```
 
 ---
